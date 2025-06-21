@@ -117,6 +117,37 @@ python3 m3u8_fileto_improved.py
    - 진행상황을 실시간으로 확인
    - 필요시 "변환 중지" 버튼으로 중단 가능
 
+## 📦 실행 파일 빌드 (Build)
+
+Python이 설치되지 않은 환경에서도 프로그램을 실행할 수 있도록 독립 실행 파일을 만들 수 있습니다.
+
+**참고:** 안티바이러스 소프트웨어의 오탐(바이러스로 잘못 감지하는 현상)을 피하기 위해, 하나의 파일로 묶는 것보다 폴더 형태로 빌드하는 것을 권장합니다.
+
+### 1. PyInstaller 설치
+```bash
+pip install pyinstaller
+```
+
+### 2. 빌드 명령어 실행 (권장 방식)
+
+#### Windows (.exe)
+터미널에서 다음 명령어를 실행하세요.
+```bash
+pyinstaller --windowed --name M3U8_Converter --icon=app_icon.ico m3u8_fileto_improved.py
+```
+
+#### macOS (.app)
+macOS에서 다음 명령어를 실행하세요.
+```bash
+pyinstaller --windowed --name M3U8_Converter --icon=app_icon.icns m3u8_fileto_improved.py
+```
+
+### 3. 결과 확인 및 배포
+빌드가 완료되면 `dist` 폴더 안에 **`M3U8_Converter` 폴더**가 생성됩니다.
+
+*   **실행**: 폴더 안의 `M3U8_Converter.exe`(Windows) 또는 `M3U8_Converter.app`(macOS)을 실행하세요.
+*   **배포**: 다른 사람에게 전달할 때는 **`M3U8_Converter` 폴더 전체를 압축**하여 보내야 합니다.
+
 ## 파일 구조
 
 ```

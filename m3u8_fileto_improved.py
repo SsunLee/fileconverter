@@ -15,12 +15,6 @@ class M3U8Converter:
         self.root.geometry("800x800")
         self.root.resizable(True, True)
         
-        # macOS 최적화
-        if sys.platform == "darwin":  # macOS
-            self.root.tk.call('tk', 'scaling', 2.0)  # Retina 디스플레이 지원
-            # macOS 메뉴바 통합
-            self.root.createcommand('tk::mac::Quit', self.root.quit)
-        
         # 변수 초기화
         self.selected_files = []
         self.output_directory = ""
@@ -33,6 +27,25 @@ class M3U8Converter:
         
         # 스타일 설정
         self.setup_styles()
+        
+        # 아이콘 설정
+        try:
+            icon_path = 'app_icon.ico'
+            if sys.platform == "darwin": # macOS
+                icon_path = 'app_icon.icns'
+            
+            if os.path.exists(icon_path):
+                self.root.iconbitmap(icon_path)
+            else:
+                self.log_message("아이콘 파일을 찾을 수 없습니다: app_icon.ico / app_icon.icns")
+        except Exception as e:
+            self.log_message(f"아이콘 설정 오류: {e}")
+        
+        # macOS 최적화
+        if sys.platform == "darwin":  # macOS
+            self.root.tk.call('tk', 'scaling', 2.0)  # Retina 디스플레이 지원
+            # macOS 메뉴바 통합
+            self.root.createcommand('tk::mac::Quit', self.root.quit)
         
     def setup_styles(self):
         """GUI 스타일 설정"""
