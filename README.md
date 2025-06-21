@@ -37,7 +37,14 @@ M3U8 파일을 MP4로 변환하는 Python GUI 애플리케이션입니다.
 
 #### macOS
 ```bash
+# Homebrew 설치 (권장)
 brew install ffmpeg
+
+# 또는 MacPorts 사용
+sudo port install ffmpeg
+
+# 설치 확인
+ffmpeg -version
 ```
 
 #### Ubuntu/Debian
@@ -48,8 +55,48 @@ sudo apt install ffmpeg
 
 ### 실행 방법
 ```bash
+# Windows/Linux
 python m3u8_fileto_improved.py
+
+# macOS
+python3 m3u8_fileto_improved.py
 ```
+
+## macOS 사용자를 위한 추가 정보
+
+### 시스템 요구사항
+- macOS 10.14 (Mojave) 이상 권장
+- Python 3.6 이상
+- FFmpeg (Homebrew로 설치 권장)
+
+### macOS 특별 기능
+- **Retina 디스플레이 지원**: 고해상도 화면에서 선명한 표시
+- **macOS 메뉴바 통합**: 네이티브 macOS 앱처럼 동작
+- **파일 권한**: 보안 설정에서 필요한 권한 허용
+
+### 문제 해결
+1. **FFmpeg 명령어를 찾을 수 없는 경우**:
+   ```bash
+   # PATH 확인
+   echo $PATH
+   
+   # FFmpeg 재설치
+   brew reinstall ffmpeg
+   ```
+
+2. **Python 실행 오류**:
+   ```bash
+   # Python3 사용
+   python3 m3u8_fileto_improved.py
+   
+   # 또는 가상환경 사용
+   python3 -m venv venv
+   source venv/bin/activate
+   python m3u8_fileto_improved.py
+   ```
+
+3. **파일 권한 오류**:
+   - 시스템 환경설정 > 보안 및 개인정보 보호에서 권한 허용
 
 ## 사용법
 

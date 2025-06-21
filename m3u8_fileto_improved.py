@@ -14,6 +14,12 @@ class M3U8Converter:
         self.root.geometry("800x800")
         self.root.resizable(True, True)
         
+        # macOS 최적화
+        if sys.platform == "darwin":  # macOS
+            self.root.tk.call('tk', 'scaling', 2.0)  # Retina 디스플레이 지원
+            # macOS 메뉴바 통합
+            self.root.createcommand('tk::mac::Quit', self.root.quit)
+        
         # 변수 초기화
         self.selected_files = []
         self.output_directory = ""
@@ -256,9 +262,15 @@ class M3U8Converter:
             filetypes=[("M3U8 files", "*.m3u8"), ("All files", "*.*")]
         )
         if file_path:
-            self.selected_files = [file_path]
-            self.update_file_list()
-            self.log_message(f"단일 파일 선택됨: {os.path.basename(file_path)}")
+            # 파일 경로 인코딩 처리
+            try:
+                file_path = os.path.abspath(file_path)
+                self.selected_files = [file_path]
+                self.update_file_list()
+                self.log_message(f"단일 파일 선택됨: {os.path.basename(file_path)}")
+            except Exception as e:
+                self.log_message(f"파일 경로 처리 오류: {str(e)}")
+                messagebox.showerror("오류", f"파일 경로 처리 중 오류가 발생했습니다: {str(e)}")
             
     def select_multiple_files(self):
         """여러 파일 선택"""
@@ -267,49 +279,83 @@ class M3U8Converter:
             filetypes=[("M3U8 files", "*.m3u8"), ("All files", "*.*")]
         )
         if file_paths:
-            self.selected_files.extend(file_paths)
-            self.update_file_list()
-            self.log_message(f"{len(file_paths)}개 파일 추가됨")
+            try:
+                # 파일 경로 인코딩 처리
+                valid_paths = []
+                for path in file_paths:
+                    abs_path = os.path.abspath(path)
+                    valid_paths.append(abs_path)
+                
+                self.selected_files.extend(valid_paths)
+                self.update_file_list()
+                self.log_message(f"{len(valid_paths)}개 파일 추가됨")
+            except Exception as e:
+                self.log_message(f"파일 경로 처리 오류: {str(e)}")
+                messagebox.showerror("오류", f"파일 경로 처리 중 오류가 발생했습니다: {str(e)}")
             
     def select_folder(self):
         """폴더 선택 (배치 처리)"""
         folder_path = filedialog.askdirectory(title="M3U8 파일이 있는 폴더를 선택하세요")
         if folder_path:
-            m3u8_files = []
-            for root, dirs, files in os.walk(folder_path):
-                for file in files:
-                    if file.lower().endswith('.m3u8'):
-                        m3u8_files.append(os.path.join(root, file))
-            
-            if m3u8_files:
-                self.selected_files.extend(m3u8_files)
-                self.update_file_list()
-                self.log_message(f"폴더에서 {len(m3u8_files)}개 M3U8 파일 발견")
-            else:
-                messagebox.showwarning("경고", "선택한 폴더에서 M3U8 파일을 찾을 수 없습니다.")
+            try:
+                # 폴더 경로 인코딩 처리
+                abs_folder_path = os.path.abspath(folder_path)
+                m3u8_files = []
+                
+                for root, dirs, files in os.walk(abs_folder_path):
+                    for file in files:
+                        if file.lower().endswith('.m3u8'):
+                            file_path = os.path.join(root, file)
+                            m3u8_files.append(file_path)
+                
+                if m3u8_files:
+                    self.selected_files.extend(m3u8_files)
+                    self.update_file_list()
+                    self.log_message(f"폴더에서 {len(m3u8_files)}개 M3U8 파일 발견")
+                else:
+                    messagebox.showwarning("경고", "선택한 폴더에서 M3U8 파일을 찾을 수 없습니다.")
+            except Exception as e:
+                self.log_message(f"폴더 처리 오류: {str(e)}")
+                messagebox.showerror("오류", f"폴더 처리 중 오류가 발생했습니다: {str(e)}")
                 
     def update_file_list(self):
         """파일 목록 업데이트"""
         self.file_listbox.delete(0, tk.END)
         for file_path in self.selected_files:
-            self.file_listbox.insert(tk.END, os.path.basename(file_path))
+            try:
+                filename = os.path.basename(file_path)
+                self.file_listbox.insert(tk.END, filename)
+            except Exception as e:
+                # 파일명 처리 오류 시 경로 전체 표시
+                self.file_listbox.insert(tk.END, file_path)
+                self.log_message(f"파일명 처리 오류: {str(e)}")
             
     def remove_selected_file(self):
         """선택된 파일 제거"""
         selection = self.file_listbox.curselection()
         if selection:
-            index = selection[0]
-            removed_file = self.selected_files.pop(index)
-            self.update_file_list()
-            self.log_message(f"파일 제거됨: {os.path.basename(removed_file)}")
+            try:
+                index = selection[0]
+                removed_file = self.selected_files.pop(index)
+                self.update_file_list()
+                filename = os.path.basename(removed_file)
+                self.log_message(f"파일 제거됨: {filename}")
+            except Exception as e:
+                self.log_message(f"파일 제거 오류: {str(e)}")
             
     def select_output_directory(self):
         """출력 디렉토리 선택"""
         directory = filedialog.askdirectory(title="출력 폴더를 선택하세요")
         if directory:
-            self.output_directory = directory
-            self.output_var.set(directory)
-            self.log_message(f"출력 디렉토리 설정: {directory}")
+            try:
+                # 디렉토리 경로 인코딩 처리
+                abs_directory = os.path.abspath(directory)
+                self.output_directory = abs_directory
+                self.output_var.set(abs_directory)
+                self.log_message(f"출력 디렉토리 설정: {abs_directory}")
+            except Exception as e:
+                self.log_message(f"출력 디렉토리 처리 오류: {str(e)}")
+                messagebox.showerror("오류", f"출력 디렉토리 처리 중 오류가 발생했습니다: {str(e)}")
             
     def start_conversion(self):
         """변환 시작"""
@@ -355,13 +401,22 @@ class M3U8Converter:
                 if not self.is_converting:
                     break
                     
-                self.status_label.config(text=f"변환 중: {os.path.basename(m3u8_file)} ({i+1}/{total_files})")
+                try:
+                    # 파일명 안전하게 처리
+                    safe_filename = os.path.basename(m3u8_file)
+                    self.status_label.config(text=f"변환 중: {safe_filename} ({i+1}/{total_files})")
+                except Exception as e:
+                    self.status_label.config(text=f"변환 중: 파일 {i+1}/{total_files}")
+                
                 self.current_progress['value'] = 0
                 
                 try:
-                    # 출력 파일명 생성
+                    # 출력 파일명 생성 (인코딩 안전)
                     if self.filename_format.get() == "original_date":
-                        original_filename = os.path.splitext(os.path.basename(m3u8_file))[0]
+                        try:
+                            original_filename = os.path.splitext(os.path.basename(m3u8_file))[0]
+                        except Exception:
+                            original_filename = f"file_{i+1}"
                         current_time = datetime.now().strftime("%Y_%m_%d_%H%M%S")
                         output_filename = f"{original_filename}_{current_time}.mp4"
                     else:
@@ -375,14 +430,26 @@ class M3U8Converter:
                     
                     if success:
                         successful_conversions += 1
-                        self.log_message(f"✓ 성공: {os.path.basename(m3u8_file)}")
+                        try:
+                            safe_filename = os.path.basename(m3u8_file)
+                            self.log_message(f"✓ 성공: {safe_filename}")
+                        except Exception:
+                            self.log_message(f"✓ 성공: 파일 {i+1}")
                     else:
                         failed_conversions += 1
-                        self.log_message(f"✗ 실패: {os.path.basename(m3u8_file)}")
+                        try:
+                            safe_filename = os.path.basename(m3u8_file)
+                            self.log_message(f"✗ 실패: {safe_filename}")
+                        except Exception:
+                            self.log_message(f"✗ 실패: 파일 {i+1}")
                         
                 except Exception as e:
                     failed_conversions += 1
-                    self.log_message(f"✗ 오류: {os.path.basename(m3u8_file)} - {str(e)}")
+                    try:
+                        safe_filename = os.path.basename(m3u8_file)
+                        self.log_message(f"✗ 오류: {safe_filename} - {str(e)}")
+                    except Exception:
+                        self.log_message(f"✗ 오류: 파일 {i+1} - {str(e)}")
                 
                 self.overall_progress['value'] = i + 1
                 
@@ -418,15 +485,29 @@ class M3U8Converter:
                 output_path
             ]
             
-            # ffmpeg 실행
-            process = subprocess.Popen(
-                command, 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE, 
-                text=True,
-                bufsize=1,
-                universal_newlines=True
-            )
+            # ffmpeg 실행 (인코딩 문제 해결)
+            if sys.platform == "win32":
+                # Windows에서 한글 경로 처리
+                process = subprocess.Popen(
+                    command, 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE, 
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True,
+                    encoding='utf-8',
+                    errors='ignore'
+                )
+            else:
+                # macOS/Linux
+                process = subprocess.Popen(
+                    command, 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE, 
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
             
             # 실시간 출력 처리
             while True:
