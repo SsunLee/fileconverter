@@ -1,0 +1,121 @@
+유형: 스트리밍
+URL: https://cdn.plyr.io/3.7.8/plyr.polyfilled.js
+포맷: js
+--------------------------------------------------
+유형: 스트리밍
+URL: https://cdn.jsdelivr.net/npm/p2p-media-loader-hlsjs@2/dist/p2p-media-loader-hlsjs.es.min.js
+포맷: js
+--------------------------------------------------
+유형: 스트리밍
+URL: https://cdn.tapioni.com/adgpt.js
+포맷: js
+--------------------------------------------------
+유형: 스트리밍
+URL: https://cdn.jsdelivr.net/npm/p2p-media-loader-core@2/dist/p2p-media-loader-core.es.min.js
+포맷: js
+--------------------------------------------------
+유형: 스트리밍
+URL: https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js
+포맷: js
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/images/logo.png?v=1
+설명: Home
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon-type.png
+설명: Videos
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon-actor.png
+설명: Models
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon-category.png
+설명: Categories
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon-tag.png
+설명: Tag
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/flag-en.jpg
+설명: EN
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/flag-cn.jpg
+설명: CN
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/flag-ja.jpg
+설명: JP
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/flag-cn.png
+설명: CN
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/images/tpd-b-24px.png
+설명: ThePornDude
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon/home.png
+설명: home icon
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon/play.png
+설명: play icon
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/icon/eye.png
+설명: eye icon
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319417.jpg
+설명: 초대남과-1대1-휴대폰-촬영하는-초코와이프
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319470.jpg
+설명: asmr-신음소리로-이웃주민-다-깨우는-609호
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319444.jpg
+설명: 불타오르는-커플의-섹스-브이로그
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319477.jpg
+설명: 공중-화장실-파파라치-유명인-샷
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319486.jpg
+설명: 헬스보이-킬러-hingu-하이라이트
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319454.jpg
+설명: 페티시-화보요정-라니-후방주의-모음
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319893.jpg
+설명: 술-취해-즉석-떡-치는-러시아-도우미
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/storage/images/thumbnails/319743.jpg
+설명: dm으로-연락-온-20살-지나포함-여러명
+--------------------------------------------------
+유형: 이미지
+URL: https://javrank.com/asset/images/btop.png
+설명: Back to Top
+--------------------------------------------------
+유형: 이미지
+URL: data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==
+설명: 
+--------------------------------------------------
+유형: 임베드
+URL: //a.magsrv.com/iframe.php?idzone=5534968&size=300x250
+--------------------------------------------------
+유형: 임베드
+URL: https://td.doubleclick.net/td/ga/rul?tid=G-RG0VYW07EE&gacid=1091951843.1744728263&gtm=45je54b0v9118732516za200&dma=0&gcd=13l3l3l3l1l1&npa=0&pscdl=noapi&aip=1&fledge=1&frm=0&tag_exp=102509682~102803279~102813109~102887800~102926062~103021830~103027016~103051953~103055465~103077950&z=1478713524
+--------------------------------------------------
+유형: 임베드
+URL: javascript:false
+--------------------------------------------------
