@@ -6,6 +6,7 @@ import threading
 from datetime import datetime
 import queue
 import sys
+import re
 
 class M3U8Converter:
     def __init__(self):
@@ -25,6 +26,7 @@ class M3U8Converter:
         self.output_directory = ""
         self.conversion_queue = queue.Queue()
         self.is_converting = False
+        self.current_process = None
         
         # GUI 구성
         self.setup_gui()
@@ -46,6 +48,13 @@ class M3U8Converter:
         style.configure('Title.TLabel', 
                        font=('Arial', 12, 'bold'),
                        foreground='#2c3e50')
+        
+        # 프로그레스바 스타일 추가 (초록색)
+        style.configure('Green.Horizontal.TProgressbar',
+                       troughcolor='#f0f0f0',    # 배경 트랙 색상
+                       background='#2ecc71',   # 진행 바 색상 (밝은 녹색)
+                       thickness=15,           # 두께
+                       borderwidth=0)          # 테두리 제거
         
     def setup_gui(self):
         """GUI 구성 요소 설정"""
@@ -190,12 +199,12 @@ class M3U8Converter:
         
         # 전체 진행률
         ttk.Label(progress_frame, text="전체 진행률:").grid(row=0, column=0, sticky=tk.W)
-        self.overall_progress = ttk.Progressbar(progress_frame, mode='determinate')
+        self.overall_progress = ttk.Progressbar(progress_frame, mode='determinate', style='Green.Horizontal.TProgressbar')
         self.overall_progress.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(10, 0))
         
         # 현재 파일 진행률
         ttk.Label(progress_frame, text="현재 파일:").grid(row=1, column=0, sticky=tk.W, pady=(10, 0))
-        self.current_progress = ttk.Progressbar(progress_frame, mode='determinate')
+        self.current_progress = ttk.Progressbar(progress_frame, mode='determinate', style='Green.Horizontal.TProgressbar')
         self.current_progress.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(10, 0), pady=(10, 0))
         
         # 상태 라벨
@@ -382,7 +391,15 @@ class M3U8Converter:
         
     def stop_conversion(self):
         """변환 중지"""
-        self.is_converting = False
+        if self.is_converting:
+            self.is_converting = False
+            if self.current_process:
+                try:
+                    self.current_process.kill()
+                    self.log_message("FFmpeg 프로세스를 중지했습니다.")
+                except Exception as e:
+                    self.log_message(f"FFmpeg 프로세스 중지 중 오류 발생: {e}")
+        
         self.convert_button.config(state='normal')
         self.stop_button.config(state='disabled')
         self.log_message("변환이 중지되었습니다.")
@@ -482,47 +499,58 @@ class M3U8Converter:
                 '-c', 'copy',
                 '-bsf:a', 'aac_adtstoasc',
                 '-y',  # 기존 파일 덮어쓰기
+                '-v', 'verbose', # 상세 로그 출력
                 output_path
             ]
-            
+
             # ffmpeg 실행 (인코딩 문제 해결)
+            popen_args = {
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE,
+                "text": True,
+                "bufsize": 1,
+                "universal_newlines": True
+            }
             if sys.platform == "win32":
-                # Windows에서 한글 경로 처리
-                process = subprocess.Popen(
-                    command, 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True,
-                    encoding='utf-8',
-                    errors='ignore'
-                )
-            else:
-                # macOS/Linux
-                process = subprocess.Popen(
-                    command, 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True
-                )
+                popen_args['encoding'] = 'utf-8'
+                popen_args['errors'] = 'ignore'
+
+            self.current_process = subprocess.Popen(command, **popen_args)
             
+            duration_seconds = 0
+            self.current_progress['value'] = 0
+            self.root.update_idletasks()
+
             # 실시간 출력 처리
-            while True:
-                output = process.stderr.readline()
-                if output == '' and process.poll() is not None:
+            for line in iter(self.current_process.stderr.readline, ''):
+                if not self.is_converting:
                     break
-                if output:
-                    # 진행률 정보 추출 (간단한 예시)
-                    if 'time=' in output:
-                        self.current_progress['value'] = 50  # 임시 진행률
+
+                if "Duration:" in line and duration_seconds == 0:
+                    match = re.search(r'Duration: (\d{2}):(\d{2}):(\d{2})\.(\d{2})', line)
+                    if match:
+                        h, m, s, ms = map(int, match.groups())
+                        duration_seconds = h * 3600 + m * 60 + s + ms / 100
+                        self.log_message(f"영상 길이 감지: {duration_seconds:.2f}초")
+                
+                if "time=" in line and duration_seconds > 0:
+                    match = re.search(r'time=(\d{2}):(\d{2}):(\d{2})\.(\d{2})', line)
+                    if match:
+                        h, m, s, ms = map(int, match.groups())
+                        current_seconds = h * 3600 + m * 60 + s + ms / 100
+                        progress = (current_seconds / duration_seconds) * 100
+                        self.current_progress['value'] = min(progress, 100) # 100%를 넘지 않도록
                         self.root.update_idletasks()
-            
-            return_code = process.poll()
-            
+
+            return_code = self.current_process.wait()
+            self.current_process = None
+
+            if not self.is_converting:
+                return False
+
             if return_code == 0:
+                self.current_progress['value'] = 100
+                self.root.update_idletasks()
                 # 변환 성공 시 원본 파일 삭제
                 if self.delete_original.get():
                     try:
@@ -538,6 +566,9 @@ class M3U8Converter:
                 
         except Exception as e:
             self.log_message(f"변환 중 오류: {str(e)}")
+            if self.current_process:
+                self.current_process.kill()
+                self.current_process = None
             return False
             
     def run(self):
