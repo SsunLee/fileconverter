@@ -11,9 +11,10 @@ import re
 class M3U8Converter:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("M3U8 to MP4 Converter - 향상된 버전")
+        self.root.title("파일 변환 프로그램 - SunBae")
         self.root.geometry("800x800")
         self.root.resizable(True, True)
+        self.root.configure(background='white') # 프로그램 뒷 배경
         
         # 변수 초기화
         self.selected_files = []
@@ -21,6 +22,7 @@ class M3U8Converter:
         self.conversion_queue = queue.Queue()
         self.is_converting = False
         self.current_process = None
+        self.FONT_FAMILY = "맑은 고딕"
         
         # GUI 구성
         self.setup_gui()
@@ -51,23 +53,46 @@ class M3U8Converter:
         """GUI 스타일 설정"""
         style = ttk.Style()
         style.theme_use('clam')
+
+        # 테마 색상 및 폰트 정의
+        ACTIVE_BLUE = "#1381b6"
+        HOVER_BLUE = "#1a9ddd"
+        INACTIVE_GREY = "#dedfd7"
+        FONT_COLOR_LIGHT = "white"
+        FONT_COLOR_DARK = "#a9a9a9"
+        
+        # 기본 위젯 스타일 설정 (배경 흰색)
+        style.configure('.', background='white', font=(self.FONT_FAMILY, 9))
+        style.configure('TFrame', background='white')
+        style.configure('TLabel', background='white')
+        style.configure('TLabelframe', background='white')
+        style.configure('TLabelframe.Label', background='white', foreground='#555', font=(self.FONT_FAMILY, 9, 'bold'))
+        style.configure('TCheckbutton', background='white')
+        style.configure('TRadiobutton', background='white')
         
         # 버튼 스타일
         style.configure('Action.TButton', 
-                       padding=10, 
-                       font=('Arial', 10, 'bold'))
+                       padding=8, 
+                       font=(self.FONT_FAMILY, 9, 'bold'),
+                       background=ACTIVE_BLUE,
+                       foreground=FONT_COLOR_LIGHT,
+                       borderwidth=0,
+                       relief='flat')
+        style.map('Action.TButton',
+              background=[('active', HOVER_BLUE), ('disabled', INACTIVE_GREY)],
+              foreground=[('disabled', FONT_COLOR_DARK)])
         
-        # 프레임 스타일
+        # 제목 스타일
         style.configure('Title.TLabel', 
-                       font=('Arial', 12, 'bold'),
-                       foreground='#2c3e50')
+                       font=(self.FONT_FAMILY, 12, 'bold'),
+                       foreground='#37474F')
         
-        # 프로그레스바 스타일 추가 (초록색)
-        style.configure('Green.Horizontal.TProgressbar',
-                       troughcolor='#f0f0f0',    # 배경 트랙 색상
-                       background='#2ecc71',   # 진행 바 색상 (밝은 녹색)
-                       thickness=15,           # 두께
-                       borderwidth=0)          # 테두리 제거
+        # 프로그레스바 스타일 (파란색)
+        style.configure('Blue.Horizontal.TProgressbar',
+                       troughcolor='#e0e0e0',
+                       background=ACTIVE_BLUE,
+                       thickness=15,
+                       borderwidth=0)
         
     def setup_gui(self):
         """GUI 구성 요소 설정"""
@@ -75,11 +100,19 @@ class M3U8Converter:
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
+        # 제목 프레임
+        title_frame = ttk.Frame(main_frame)
+        title_frame.grid(row=0, column=0, columnspan=3, pady=(0, 20), sticky="ew")
+
         # 제목
-        title_label = ttk.Label(main_frame, 
+        title_label = ttk.Label(title_frame, 
                                text="M3U8 to MP4 변환기", 
                                style='Title.TLabel')
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        title_label.pack(side="left", padx=5)
+
+        # 개발자 라벨
+        dev_label = ttk.Label(title_frame, text="Developer : Sunbae★", font=(self.FONT_FAMILY, 9))
+        dev_label.pack(side="right", padx=5)
         
         # 파일 선택 섹션
         self.setup_file_selection(main_frame)
@@ -212,12 +245,12 @@ class M3U8Converter:
         
         # 전체 진행률
         ttk.Label(progress_frame, text="전체 진행률:").grid(row=0, column=0, sticky=tk.W)
-        self.overall_progress = ttk.Progressbar(progress_frame, mode='determinate', style='Green.Horizontal.TProgressbar')
+        self.overall_progress = ttk.Progressbar(progress_frame, mode='determinate', style='Blue.Horizontal.TProgressbar')
         self.overall_progress.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(10, 0))
         
         # 현재 파일 진행률
         ttk.Label(progress_frame, text="현재 파일:").grid(row=1, column=0, sticky=tk.W, pady=(10, 0))
-        self.current_progress = ttk.Progressbar(progress_frame, mode='determinate', style='Green.Horizontal.TProgressbar')
+        self.current_progress = ttk.Progressbar(progress_frame, mode='determinate', style='Blue.Horizontal.TProgressbar')
         self.current_progress.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(10, 0), pady=(10, 0))
         
         # 상태 라벨
