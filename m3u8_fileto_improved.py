@@ -23,6 +23,7 @@ class M3U8Converter:
         self.is_converting = False
         self.current_process = None
         self.FONT_FAMILY = "맑은 고딕"
+        self.current_progress_running = False
         
         # GUI 구성
         self.setup_gui()
@@ -540,19 +541,26 @@ class M3U8Converter:
             # ffmpeg 명령어 구성
             command = [
                 'ffmpeg',
+                '-hide_banner',
+                '-stats_period', '1',
                 '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
+                '-allowed_extensions', 'ALL',
+                '-allowed_segment_extensions', 'ALL',
+                '-extension_picky', '0',
                 '-i', m3u8_path,
                 '-c', 'copy',
                 '-bsf:a', 'aac_adtstoasc',
                 '-y',  # 기존 파일 덮어쓰기
-                '-v', 'verbose', # 상세 로그 출력
+                '-progress', 'pipe:1',
+                '-nostats',
                 output_path
             ]
+            self.log_message("FFmpeg 실행: " + " ".join(f'"{arg}"' if " " in arg else arg for arg in command))
 
             # ffmpeg 실행 (인코딩 문제 해결)
             popen_args = {
                 "stdout": subprocess.PIPE,
-                "stderr": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
                 "text": True,
                 "bufsize": 1,
                 "universal_newlines": True
@@ -560,17 +568,28 @@ class M3U8Converter:
             if sys.platform == "win32":
                 popen_args['encoding'] = 'utf-8'
                 popen_args['errors'] = 'ignore'
+                popen_args['creationflags'] = subprocess.CREATE_NO_WINDOW
 
             self.current_process = subprocess.Popen(command, **popen_args)
             
             duration_seconds = 0
+            last_log_time = 0
+            last_progress_time = 0
             self.current_progress['value'] = 0
+            self.current_progress.config(mode='indeterminate')
+            self.current_progress.start(10)
+            self.current_progress_running = True
             self.root.update_idletasks()
+            self.log_message("진행률을 계산할 수 없는 스트림이면 진행 막대가 움직이는 상태로 표시됩니다.")
 
             # 실시간 출력 처리
-            for line in iter(self.current_process.stderr.readline, ''):
+            for line in iter(self.current_process.stdout.readline, ''):
                 if not self.is_converting:
                     break
+
+                line = line.strip()
+                if not line:
+                    continue
 
                 if "Duration:" in line and duration_seconds == 0:
                     match = re.search(r'Duration: (\d{2}):(\d{2}):(\d{2})\.(\d{2})', line)
@@ -578,6 +597,10 @@ class M3U8Converter:
                         h, m, s, ms = map(int, match.groups())
                         duration_seconds = h * 3600 + m * 60 + s + ms / 100
                         self.log_message(f"영상 길이 감지: {duration_seconds:.2f}초")
+                        if self.current_progress_running:
+                            self.current_progress.stop()
+                            self.current_progress.config(mode='determinate')
+                            self.current_progress_running = False
                 
                 if "time=" in line and duration_seconds > 0:
                     match = re.search(r'time=(\d{2}):(\d{2}):(\d{2})\.(\d{2})', line)
@@ -587,9 +610,35 @@ class M3U8Converter:
                         progress = (current_seconds / duration_seconds) * 100
                         self.current_progress['value'] = min(progress, 100) # 100%를 넘지 않도록
                         self.root.update_idletasks()
+                elif line.startswith("out_time_ms="):
+                    try:
+                        current_seconds = int(line.split("=", 1)[1]) / 1_000_000
+                        now = datetime.now().timestamp()
+                        if now - last_progress_time >= 1:
+                            self.status_label.config(text=f"변환 중... 처리 시간 {current_seconds:.1f}초")
+                            self.root.update_idletasks()
+                            last_progress_time = now
+                    except ValueError:
+                        pass
+                elif line.startswith("speed="):
+                    now = datetime.now().timestamp()
+                    if now - last_log_time >= 5:
+                        self.log_message(f"FFmpeg 상태: {line}")
+                        last_log_time = now
+                elif line.startswith("progress="):
+                    if line == "progress=end":
+                        self.log_message("FFmpeg 처리 종료 신호 수신")
+                elif any(keyword in line.lower() for keyword in ["error", "invalid", "failed", "not found", "denied", "403", "404"]):
+                    self.log_message(f"FFmpeg 오류: {line}")
+                elif line.startswith(("Input #", "Output #", "Stream #", "Opening ")):
+                    self.log_message(line)
 
             return_code = self.current_process.wait()
             self.current_process = None
+            if self.current_progress_running:
+                self.current_progress.stop()
+                self.current_progress.config(mode='determinate')
+                self.current_progress_running = False
 
             if not self.is_converting:
                 return False
@@ -612,6 +661,10 @@ class M3U8Converter:
                 
         except Exception as e:
             self.log_message(f"변환 중 오류: {str(e)}")
+            if self.current_progress_running:
+                self.current_progress.stop()
+                self.current_progress.config(mode='determinate')
+                self.current_progress_running = False
             if self.current_process:
                 self.current_process.kill()
                 self.current_process = None

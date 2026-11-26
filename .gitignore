@@ -122,3 +122,10 @@ Thumbs.db
 *.log
 output/
 temp/ 
+# Local StreamForge packaging outputs
+/build_modern*/
+/build_onefile/
+/release/
+/release_modern/
+/.codex-continuity/
+!StreamForge_Converter_SEGRange_v12.spec

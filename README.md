@@ -98,6 +98,10 @@ python3 m3u8_fileto_improved.py
 3. **파일 권한 오류**:
    - 시스템 환경설정 > 보안 및 개인정보 보호에서 권한 허용
 
+4. **FFmpeg 8에서 HLS 세그먼트 확장자 오류가 발생하는 경우**:
+   - `URL ... is not in allowed_segment_extensions` 또는 `Invalid data found when processing input` 오류는 세그먼트 URL에 확장자가 없을 때 발생할 수 있습니다.
+   - 변환 명령에 `-allowed_extensions ALL -allowed_segment_extensions ALL -extension_picky 0` 옵션을 추가해 처리합니다.
+
 ## 사용법
 
 1. **파일 선택**

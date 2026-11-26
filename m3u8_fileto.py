@@ -13,6 +13,9 @@ def convert_m3u8_to_mp4(m3u8_path, output_path):
         command = [
             'ffmpeg',
             '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
+            '-allowed_extensions', 'ALL',
+            '-allowed_segment_extensions', 'ALL',
+            '-extension_picky', '0',
             '-i', m3u8_path,
             '-c', 'copy',
             '-bsf:a', 'aac_adtstoasc',
