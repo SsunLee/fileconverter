@@ -7,6 +7,7 @@ from datetime import datetime
 import queue
 import sys
 import re
+from hls_conversion import HLS_INPUT_OPTIONS, PROCESS_OPTIONS, publish_video, temporary_mp4
 
 class M3U8Converter:
     def __init__(self):
@@ -535,30 +536,31 @@ class M3U8Converter:
             
     def convert_single_file(self, m3u8_path, output_path):
         """단일 파일 변환"""
+        temporary = None
         try:
             self.log_message(f"변환 시작: {os.path.basename(m3u8_path)}")
             
             # ffmpeg 명령어 구성
+            temporary = temporary_mp4(output_path)
             command = [
                 'ffmpeg',
                 '-hide_banner',
                 '-stats_period', '1',
-                '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
-                '-allowed_extensions', 'ALL',
-                '-allowed_segment_extensions', 'ALL',
-                '-extension_picky', '0',
+                *HLS_INPUT_OPTIONS,
                 '-i', m3u8_path,
+                '-map', '0:V:0', '-map', '0:a:0?',
                 '-c', 'copy',
-                '-bsf:a', 'aac_adtstoasc',
+                '-movflags', '+faststart',
                 '-y',  # 기존 파일 덮어쓰기
                 '-progress', 'pipe:1',
                 '-nostats',
-                output_path
+                temporary
             ]
             self.log_message("FFmpeg 실행: " + " ".join(f'"{arg}"' if " " in arg else arg for arg in command))
 
             # ffmpeg 실행 (인코딩 문제 해결)
             popen_args = {
+                **PROCESS_OPTIONS,
                 "stdout": subprocess.PIPE,
                 "stderr": subprocess.STDOUT,
                 "text": True,
@@ -568,7 +570,6 @@ class M3U8Converter:
             if sys.platform == "win32":
                 popen_args['encoding'] = 'utf-8'
                 popen_args['errors'] = 'ignore'
-                popen_args['creationflags'] = subprocess.CREATE_NO_WINDOW
 
             self.current_process = subprocess.Popen(command, **popen_args)
             
@@ -644,6 +645,7 @@ class M3U8Converter:
                 return False
 
             if return_code == 0:
+                publish_video(temporary, output_path)
                 self.current_progress['value'] = 100
                 self.root.update_idletasks()
                 # 변환 성공 시 원본 파일 삭제
@@ -667,8 +669,12 @@ class M3U8Converter:
                 self.current_progress_running = False
             if self.current_process:
                 self.current_process.kill()
+                self.current_process.wait()
                 self.current_process = None
             return False
+        finally:
+            if temporary and os.path.exists(temporary):
+                os.remove(temporary)
             
     def run(self):
         """애플리케이션 실행"""

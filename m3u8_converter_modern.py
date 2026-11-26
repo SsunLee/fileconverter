@@ -16,6 +16,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+from hls_conversion import HLS_INPUT_OPTIONS, PROCESS_OPTIONS
 
 
 APP_TITLE = "StreamForge Converter"
@@ -1587,16 +1588,7 @@ class ModernM3U8Converter(tk.Tk):
             "1",
         ]
         if self.is_m3u8_input(input_path):
-            command += [
-                "-protocol_whitelist",
-                "file,http,https,tcp,tls,crypto",
-                "-allowed_extensions",
-                "ALL",
-                "-allowed_segment_extensions",
-                "ALL",
-                "-extension_picky",
-                "0",
-        ]
+            command.extend(HLS_INPUT_OPTIONS)
         if self.is_url(input_path) and headers:
             header_text = self.ffmpeg_header_text(headers)
             if header_text:
@@ -1612,7 +1604,7 @@ class ModernM3U8Converter(tk.Tk):
                 self.events.put(("log", f"Re-encode video map selected: {video_map}"))
                 command += ["-map", video_map]
             else:
-                command += ["-map", "0:v?"]
+                command += ["-map", "0:V:0" if self.is_m3u8_input(input_path) else "0:v?"]
             command += ["-map", "0:a?"]
             command += [
                 "-c:v",
@@ -1634,6 +1626,8 @@ class ModernM3U8Converter(tk.Tk):
         else:
             if copy_video_map:
                 command += ["-map", copy_video_map]
+            elif self.is_m3u8_input(input_path):
+                command += ["-map", "0:V:0"]
             command += ["-map", "0:a?"]
             command += [
                 "-c",
@@ -1742,7 +1736,7 @@ class ModernM3U8Converter(tk.Tk):
             input_max_area = int(input_summary.get("max_video_area", 0)) if input_summary else 0
             output_has_video = bool(output_summary and output_summary.get("has_video", False))
             output_max_area = int(output_summary.get("max_video_area", 0)) if output_summary else 0
-            if input_has_video:
+            if input_has_video or self.is_m3u8_input(input_path):
                 if not output_has_video or (input_max_area > 64 and output_max_area <= 64):
                     if not force_reencode:
                         self.events.put(("log", "Converted output has no usable video stream, retrying with re-encode."))
@@ -1791,12 +1785,7 @@ class ModernM3U8Converter(tk.Tk):
         try:
             command = [ffprobe_path, "-v", "error"]
             if self.is_m3u8_input(input_path):
-                command += [
-                    "-protocol_whitelist",
-                    "file,http,https,tcp,tls,crypto",
-                    "-allowed_extensions",
-                    "ALL",
-                ]
+                command.extend(HLS_INPUT_OPTIONS)
             if self.is_url(input_path) and headers:
                 header_text = self.ffmpeg_header_text(headers)
                 if header_text:
@@ -1804,8 +1793,9 @@ class ModernM3U8Converter(tk.Tk):
             command += ["-print_format", "json", "-show_streams", "-show_format", input_path]
             completed = subprocess.run(
                 command,
+                **PROCESS_OPTIONS,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 text=True,
                 encoding="utf-8",
                 errors="ignore",

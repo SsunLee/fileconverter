@@ -1,5 +1,12 @@
 # M3U8 to MP4 Converter
 
+## StreamForge SEGRange v12
+
+Python 3.10 이상과 FFmpeg 8.x(`ffmpeg`, `ffprobe`)를 PATH에 설치한 뒤
+`python m3u8_converter_modern.py`로 최신 GUI를 실행합니다.
+Windows EXE는 `python -m PyInstaller StreamForge_Converter_SEGRange_v12.spec`로 빌드합니다.
+HLS 변환은 영상 트랙을 필수로 선택하고, 음성이 있으면 함께 저장합니다.
+
 M3U8 파일을 MP4로 변환하는 Python GUI 애플리케이션입니다.
 
 ## 기능

@@ -3,28 +3,29 @@ from tkinter import filedialog
 import subprocess
 import os
 from datetime import datetime
+from hls_conversion import HLS_INPUT_OPTIONS, PROCESS_OPTIONS, publish_video, temporary_mp4
 
 def convert_m3u8_to_mp4(m3u8_path, output_path):
+    temporary = None
     try:
         print(f"입력 파일: {m3u8_path}")
         print(f"출력 파일: {output_path}")
         
         # ffmpeg를 사용하여 변환
+        temporary = temporary_mp4(output_path)
         command = [
             'ffmpeg',
-            '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
-            '-allowed_extensions', 'ALL',
-            '-allowed_segment_extensions', 'ALL',
-            '-extension_picky', '0',
+            *HLS_INPUT_OPTIONS,
             '-i', m3u8_path,
+            '-map', '0:V:0', '-map', '0:a:0?',
             '-c', 'copy',
-            '-bsf:a', 'aac_adtstoasc',
-            output_path
+            '-movflags', '+faststart', '-y', temporary
         ]
         
         print("실행할 명령어:", ' '.join(command))
         
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   text=True, encoding='utf-8', errors='replace', **PROCESS_OPTIONS)
         stdout, stderr = process.communicate()
         
         print("=== 표준 출력 ===")
@@ -33,6 +34,7 @@ def convert_m3u8_to_mp4(m3u8_path, output_path):
         print(stderr)
         
         if process.returncode == 0:
+            publish_video(temporary, output_path)
             print(f"변환이 완료되었습니다. 저장된 파일: {output_path}")
             
             # 변환 성공 시 원본 m3u8 파일 삭제
@@ -48,6 +50,9 @@ def convert_m3u8_to_mp4(m3u8_path, output_path):
         print(f"오류가 발생했습니다: {str(e)}")
         import traceback
         print(traceback.format_exc())
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.remove(temporary)
 
 def select_file():
     root = tk.Tk()
